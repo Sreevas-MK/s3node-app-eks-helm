@@ -1,0 +1,39 @@
+# nodejs App Configuration
+app:
+  # Basic settings
+  replicas: 5
+  # Image settings
+  image:
+    repository: sreevasmk1993/s3-nodejs-filemanager-app
+    tag: latest
+  # Port
+  containerPort: 3000
+  # Health check paths
+  probes:
+    liveness:
+      path: /health # Health check endpoint
+    readiness:
+      path: /health # Same endpoint
+  # Resource limits
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "50m"
+    limits:
+      memory: "256Mi"
+      cpu: "100m"
+  # Autoscaling
+  autoscaling:
+    minReplicas: 5
+    maxReplicas: 8
+    cpuTarget: 50
+    memoryTarget: 70
+
+secrets:
+  serviceAccountName: default
+
+argocd:
+  enabled: false # Set to false if not using ArgoCD
+monitoring:
+  enabled: true
+  namespace: monitoring

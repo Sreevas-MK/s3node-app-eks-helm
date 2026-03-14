@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.app.name }}
+  namespace: {{ .Values.global.namespace }}
+  labels:
+    app: {{ .Values.app.name }}
+spec:
+  # replicas: {{ .Values.app.replicas }} # Horizontal pod autoscaler active
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app.name }}
+
+    spec:
+      serviceAccountName: {{ .Values.secrets.serviceAccountName }}
+      containers:
+      - name: {{ .Values.app.name }}
+        image: {{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}
+        ports:
+        - containerPort: {{ .Values.app.containerPort }}
+
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.app.probes.liveness.path }}
+            port: {{ .Values.app.containerPort }}
+            scheme: HTTP
+          initialDelaySeconds: 30  # Give app time to start
+          periodSeconds: 10        # Check every 10 seconds
+          timeoutSeconds: 5        # Max 5 seconds per check
+          successThreshold: 1      # 1 success = healthy
+          failureThreshold: 3      # 3 failures = restart
+
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.app.probes.readiness.path }}
+            port: {{ .Values.app.containerPort }}
+            scheme: HTTP
+          initialDelaySeconds: 5   # Start checking sooner
+          periodSeconds: 5         # Check every 5 seconds
+          timeoutSeconds: 3        # Faster timeout
+          successThreshold: 1
+          failureThreshold: 3
+
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+          seccompProfile:
+            type: RuntimeDefault
+
+        resources:
+          requests:
+            memory: {{ .Values.app.resources.requests.memory }}
+            cpu: {{ .Values.app.resources.requests.cpu }}
+          limits:
+            memory: {{ .Values.app.resources.limits.memory }}
+            cpu: {{ .Values.app.resources.limits.cpu }}
+
+        env:
+          - name: AWS_REGION
+            value: {{ .Values.app.env.AWS_REGION | quote }}
+          - name: S3_BUCKET_NAME
+            value: {{ .Values.app.env.S3_BUCKET_NAME | quote }}
+
+        volumeMounts:
+          - name: tmp
+            mountPath: /tmp
+
+      volumes:
+        - name: tmp
+          emptyDir: {}
