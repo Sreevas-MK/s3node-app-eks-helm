@@ -6,6 +6,7 @@ metadata:
   annotations:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/group.name: {{ .Values.global.alb_group_name }}
+    alb.ingress.kubernetes.io/load-balancer-name: {{ .Values.global.alb_lb_name }}
     alb.ingress.kubernetes.io/security-groups: {{ .Values.global.alb_sg_id }}
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
